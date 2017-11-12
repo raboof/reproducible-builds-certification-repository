@@ -30,7 +30,8 @@ Would IPFS work?
 
 Debian has standardized on using OpenPGP-signed .buildinfo files, which are
 formatted as Debian 'control files'. This might seem a bit odd outside of Debian,
-but might it might be a good start to follow that convention at least for now.
+but might it might be a good start to follow that convention at least for now,
+or leave it up to each deployment to agree on a convention.
 
 ## API
 
