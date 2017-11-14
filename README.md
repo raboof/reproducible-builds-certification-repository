@@ -24,7 +24,23 @@ It would be good if a certification repository doesn't have to rely on a single
 server (or credit card) to store data. Some kind of distributed storage would be
 interesting.
 
-Would IPFS work?
+#### IPFS
+
+IPFS is content-adressible, meaning content can be found by learning its hash
+and looking for it. Since the query pattern for reproductions is probably
+mostly 'what are the certifications for package X', we would need to use
+something like ipns to make the mapping, but that means writing to the repo
+can only be done by someone who owns a particular private key, which would be
+nice not to need.
+
+#### Others?
+
+Sounds like we'd be looking for a kind of 'open dropbox alternative',
+preferably one where it's easy to set up a read-only node and configure
+replication/peering afterwards.
+
+* ownCloud/Nextcloud are PHP which does not feel right
+* seaFile (mostly C, also not great) might work but has GC issues.
 
 ## Format
 
