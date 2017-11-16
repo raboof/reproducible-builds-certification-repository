@@ -1,0 +1,7 @@
+[package]
+name = "reproducible-builds-certification-repository"
+version = "0.0.0"
+
+[dependencies]
+rocket = "*"
+rocket_codegen = "*"

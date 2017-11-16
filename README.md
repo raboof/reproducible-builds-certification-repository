@@ -5,6 +5,10 @@ for [reproducible builds](https://reproducible-builds.org)
 
 ## Storage
 
+Various 'sophisticated' storage mechanisms were considered below, but for
+now none seem to fit elegantly. For now let's just put the files on a
+regular filesystem and allow mirroring with 'traditional' tools like rsync.
+
 ### Append-only logs
 
 It has been proposed to use a secure append-only log similar to the one used
@@ -76,3 +80,16 @@ repository for Debian packages would use the Debian package name, version and
 architecture. A repository for the jars at [Maven Central](https://search.maven.org)
 would likely include groupId, artifactId, version, classifier and resource type.
 
+## Implementation
+
+When choosing a simple HTTP interface for reading and writing, and storing the
+certifications on disk, the implementation is pretty close to a traditional
+webserver. There's only some small things missing: deciding what POSTs to allow
+and serving machine-readable folder indexes. This could be implemented by using
+a webserver as a starting point and writing some custom extensions, or by writing
+some software do perform exactly this and act as a webserver. With the right
+libraries the latter would likely be easiest, and for the more advanced
+webserver features you could put a webserver acting as a proxy in between.
+
+I'd like this software to be low-footprint and nicely typed, possibly rust
+would be a nice choice?

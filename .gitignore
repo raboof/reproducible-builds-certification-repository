@@ -1,0 +1,5 @@
+target
+data
+# Are you supposed to check this in? Probably need some way to pin the
+# versions, but for now this should do
+Cargo.lock
