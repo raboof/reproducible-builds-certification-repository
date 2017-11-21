@@ -3,6 +3,10 @@
 Collecting some thoughts and prototyping for a [certification repository](https://reproducible-builds.org/docs/sharing-certifications/)
 for [reproducible builds](https://reproducible-builds.org)
 
+Debian has a proof-of-concept [buildinfo server](https://github.com/lamby/buildinfo.debian.net),
+might be interesting to consider if that is or can be made suiable for more
+general use.
+
 ## Storage
 
 Various 'sophisticated' storage mechanisms were considered below, but for
