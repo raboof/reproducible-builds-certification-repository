@@ -9,10 +9,30 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 use rocket::Data;
+use rocket::Request;
+use rocket::Response;
+use rocket::http::Status;
 use rocket::response::NamedFile;
+use rocket::response::Responder;
+
+enum RetrievedData {
+  Certification(NamedFile),
+  Index(String),
+}
+use RetrievedData::*;
+
+impl<'r> Responder<'r> for RetrievedData {
+
+  fn respond_to(self, request: &Request) -> Result<Response<'r>, Status> {
+    match self {
+      Certification(file) => file.respond_to(request),
+      Index(listing) => listing.respond_to(request),
+    }
+  }
+}
 
 #[get("/<file..>")]
-fn files(file: PathBuf) -> Result<NamedFile, String> {
+fn files(file: PathBuf) -> Result<RetrievedData, String> {
     if file.is_dir() {
       match fs::read_dir(file) {
         Ok(dir) => {
@@ -26,12 +46,12 @@ fn files(file: PathBuf) -> Result<NamedFile, String> {
               Err(_) => ()
             }
           };
-          Err(s.to_string())
+          Ok(Index(s.to_string()))
         },
         _e => Err("Could not open".to_string())
       }
     } else {
-      NamedFile::open(file).map_err(|e| {
+      NamedFile::open(file).map(Certification).map_err(|e| {
         if e.kind() == io::ErrorKind::NotFound {
         "Does not exist".to_string()
       } else {
