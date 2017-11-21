@@ -5,6 +5,7 @@ extern crate rocket;
 
 use std::io;
 use std::fs;
+use std::fs::ReadDir;
 use std::env;
 use std::path::{Path, PathBuf};
 
@@ -17,7 +18,7 @@ use rocket::response::Responder;
 
 enum RetrievedData {
   Certification(NamedFile),
-  Index(String),
+  Index(ReadDir),
 }
 use RetrievedData::*;
 
@@ -26,7 +27,22 @@ impl<'r> Responder<'r> for RetrievedData {
   fn respond_to(self, request: &Request) -> Result<Response<'r>, Status> {
     match self {
       Certification(file) => file.respond_to(request),
-      Index(listing) => listing.respond_to(request),
+      Index(dir) => {
+        let mut s = "Is a directory\n".to_owned();
+        for entry in dir {
+          match entry {
+            Ok(e) => match e.path().to_str() {
+              Some(p) => {
+                s.push_str(p);
+                s.push_str("\n")
+              },
+              None => ()
+            },
+            Err(_) => ()
+          }
+        };
+        s.to_string().respond_to(request)
+      }
     }
   }
 }
@@ -34,22 +50,7 @@ impl<'r> Responder<'r> for RetrievedData {
 #[get("/<file..>")]
 fn files(file: PathBuf) -> Result<RetrievedData, String> {
     if file.is_dir() {
-      match fs::read_dir(file) {
-        Ok(dir) => {
-          let mut s = "Is a directory, ".to_owned();
-          for entry in dir {
-            match entry {
-              Ok(e) => match e.path().to_str() {
-                Some(p) => s.push_str(p),
-                None => ()
-              },
-              Err(_) => ()
-            }
-          };
-          Ok(Index(s.to_string()))
-        },
-        _e => Err("Could not open".to_string())
-      }
+      fs::read_dir(file).map(Index).map_err(|_| "Could not open".to_string())
     } else {
       NamedFile::open(file).map(Certification).map_err(|e| {
         if e.kind() == io::ErrorKind::NotFound {
