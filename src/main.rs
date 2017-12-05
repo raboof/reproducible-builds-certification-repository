@@ -4,6 +4,7 @@
 extern crate rocket;
 
 use std::io;
+use std::io::Error;
 use std::fs;
 use std::fs::ReadDir;
 use std::env;
@@ -28,12 +29,16 @@ impl<'r> Responder<'r> for RetrievedData {
     match self {
       Certification(file) => file.respond_to(request),
       Index(dir) => {
-        let mut s = "Is a directory\n".to_owned();
+        let mut s = "".to_owned();
         for entry in dir {
           match entry {
             Ok(e) => match e.path().to_str() {
               Some(p) => {
-                s.push_str(p);
+                if p.starts_with("./") {
+                  s.push_str(&p[2..]);
+                } else {
+                  s.push_str(p);
+                }
                 s.push_str("\n")
               },
               None => ()
@@ -45,6 +50,11 @@ impl<'r> Responder<'r> for RetrievedData {
       }
     }
   }
+}
+
+#[get("/")]
+fn root() -> Result<RetrievedData, Error> {
+  fs::read_dir(".").map(Index)
 }
 
 #[get("/<file..>")]
@@ -80,6 +90,6 @@ fn main() {
     env::set_current_dir(&Path::new("data"));
 
     rocket::ignite()
-        .mount("/", routes![files, posts])
+        .mount("/", routes![root, files, posts])
         .launch();
 }
