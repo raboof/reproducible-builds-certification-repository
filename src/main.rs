@@ -31,6 +31,8 @@ extern crate serde_derive;
 #[derive(Serialize)]
 struct DirEntry {
   name: String,
+  #[serde(rename = "type")]
+  type_: String,
 }
 
 impl<'r> Responder<'r> for RetrievedData {
@@ -42,19 +44,30 @@ impl<'r> Responder<'r> for RetrievedData {
         let mut entries = Vec::new();
         for entry in dir {
           match entry {
-            Ok(e) => match e.path().to_str() {
-              Some(p) => {
-                let name;
-                if p.starts_with("./") {
-                  name = &p[2..];
-                } else {
-                  name = p;
-                };
-                entries.push(DirEntry {
-                  name: name.to_string(),
-                });
-              },
-              None => ()
+            Ok(e) => {
+              let type_;
+              if e.path().is_file() {
+                type_ = "file"
+              } else if e.path().is_dir() {
+                type_ = "dir"
+              } else {
+                type_ = "unknown"
+              }
+              match e.path().to_str() {
+                Some(p) => {
+                  let name;
+                  if p.starts_with("./") {
+                    name = &p[2..];
+                  } else {
+                    name = p;
+                  };
+                  entries.push(DirEntry {
+                    name: name.to_string(),
+                    type_: type_.to_string(),
+                  });
+                },
+                None => ()
+              }
             },
             Err(_) => ()
           }
