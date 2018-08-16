@@ -72,24 +72,27 @@ fn files(file: PathBuf) -> Result<RetrievedData, String> {
     }
 }
 
-#[post("/<file..>", data = "<body>")]
-fn posts(file: PathBuf, body: Data) -> io::Result<String> {
-    let loc = Path::new("data/").join(file);
-    if loc.exists() {
+#[put("/<file..>", data = "<body>")]
+fn puts(file: PathBuf, body: Data) -> io::Result<String> {
+    fs::create_dir_all(file.clone().parent().unwrap())?;
+    if file.exists() {
+        // TODO check if contents are identical, if so, return 200
         // TODO rocket turns this into a 404, find out how to return
-        // a better error message
+        // a better 4xx error message
         Err(io::Error::new(io::ErrorKind::Other, "Already exists"))
     } else {
-        body.stream_to_file(loc).map(|_| "OK".to_string())
+        body.stream_to_file(file).map(|_| "OK".to_string())
     }
 }
 
 fn main() {
     // TODO error responses are HTML by default, perhaps something more
     // machinereadable?
+
+    // TODO check response
     env::set_current_dir(&Path::new("data"));
 
     rocket::ignite()
-        .mount("/", routes![root, files, posts])
+        .mount("/", routes![root, files, puts])
         .launch();
 }
