@@ -2,6 +2,7 @@
 #![plugin(rocket_codegen)]
 
 extern crate rocket;
+extern crate rocket_contrib;
 
 use std::io;
 use std::io::Error;
@@ -16,6 +17,7 @@ use rocket::Response;
 use rocket::http::Status;
 use rocket::response::NamedFile;
 use rocket::response::Responder;
+use rocket_contrib::Json;
 
 enum RetrievedData {
   Certification(NamedFile),
@@ -23,30 +25,54 @@ enum RetrievedData {
 }
 use RetrievedData::*;
 
+#[macro_use]
+extern crate serde_derive;
+
+#[derive(Serialize)]
+struct DirEntry {
+  name: String,
+  #[serde(rename = "type")]
+  type_: String,
+}
+
 impl<'r> Responder<'r> for RetrievedData {
 
   fn respond_to(self, request: &Request) -> Result<Response<'r>, Status> {
     match self {
       Certification(file) => file.respond_to(request),
       Index(dir) => {
-        let mut s = "".to_owned();
+        let mut entries = Vec::new();
         for entry in dir {
           match entry {
-            Ok(e) => match e.path().to_str() {
-              Some(p) => {
-                if p.starts_with("./") {
-                  s.push_str(&p[2..]);
-                } else {
-                  s.push_str(p);
-                }
-                s.push_str("\n")
-              },
-              None => ()
+            Ok(e) => {
+              let type_;
+              if e.path().is_file() {
+                type_ = "file"
+              } else if e.path().is_dir() {
+                type_ = "dir"
+              } else {
+                type_ = "unknown"
+              }
+              match e.path().to_str() {
+                Some(p) => {
+                  let name;
+                  if p.starts_with("./") {
+                    name = &p[2..];
+                  } else {
+                    name = p;
+                  };
+                  entries.push(DirEntry {
+                    name: name.to_string(),
+                    type_: type_.to_string(),
+                  });
+                },
+                None => ()
+              }
             },
             Err(_) => ()
           }
         };
-        s.to_string().respond_to(request)
+        Json(entries).respond_to(request)
       }
     }
   }
