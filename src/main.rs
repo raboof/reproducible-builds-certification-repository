@@ -4,6 +4,7 @@
 extern crate rocket;
 
 use std::io;
+use std::io::Error;
 use std::fs;
 use std::fs::ReadDir;
 use std::env;
@@ -28,12 +29,16 @@ impl<'r> Responder<'r> for RetrievedData {
     match self {
       Certification(file) => file.respond_to(request),
       Index(dir) => {
-        let mut s = "Is a directory\n".to_owned();
+        let mut s = "".to_owned();
         for entry in dir {
           match entry {
             Ok(e) => match e.path().to_str() {
               Some(p) => {
-                s.push_str(p);
+                if p.starts_with("./") {
+                  s.push_str(&p[2..]);
+                } else {
+                  s.push_str(p);
+                }
                 s.push_str("\n")
               },
               None => ()
@@ -45,6 +50,11 @@ impl<'r> Responder<'r> for RetrievedData {
       }
     }
   }
+}
+
+#[get("/")]
+fn root() -> Result<RetrievedData, Error> {
+  fs::read_dir(".").map(Index)
 }
 
 #[get("/<file..>")]
@@ -62,24 +72,27 @@ fn files(file: PathBuf) -> Result<RetrievedData, String> {
     }
 }
 
-#[post("/<file..>", data = "<body>")]
-fn posts(file: PathBuf, body: Data) -> io::Result<String> {
-    let loc = Path::new("data/").join(file);
-    if loc.exists() {
+#[put("/<file..>", data = "<body>")]
+fn puts(file: PathBuf, body: Data) -> io::Result<String> {
+    fs::create_dir_all(file.clone().parent().unwrap())?;
+    if file.exists() {
+        // TODO check if contents are identical, if so, return 200
         // TODO rocket turns this into a 404, find out how to return
-        // a better error message
+        // a better 4xx error message
         Err(io::Error::new(io::ErrorKind::Other, "Already exists"))
     } else {
-        body.stream_to_file(loc).map(|_| "OK".to_string())
+        body.stream_to_file(file).map(|_| "OK".to_string())
     }
 }
 
 fn main() {
     // TODO error responses are HTML by default, perhaps something more
     // machinereadable?
+
+    // TODO check response
     env::set_current_dir(&Path::new("data"));
 
     rocket::ignite()
-        .mount("/", routes![files, posts])
+        .mount("/", routes![root, files, puts])
         .launch();
 }
