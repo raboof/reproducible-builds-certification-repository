@@ -4,7 +4,7 @@ Collecting some thoughts and prototyping for a [certification repository](https:
 for [reproducible builds](https://reproducible-builds.org)
 
 Debian has a proof-of-concept [buildinfo server](https://github.com/lamby/buildinfo.debian.net),
-might be interesting to consider if that is or can be made suiable for more
+might be interesting to consider if that is or can be made suitable for more
 general use.
 
 ## Storage
@@ -16,12 +16,12 @@ regular filesystem and allow mirroring with 'traditional' tools like rsync.
 ### Append-only logs
 
 It has been proposed to use a secure append-only log similar to the one used
-in [Certificat Transparency](https://www.certificate-transparency.org). The
+in [Certificate Transparency](https://www.certificate-transparency.org). The
 advantage of such a log is that a rogue certification server couldn't filter
 out some certifications and include their own instead.
 
 However, we want it to be low-friction even for 'non-trusted' participants to
-for add certifications to the repository. This puts us at risk to people polluting
+add certifications to the repository. This puts us at risk of people polluting
 the repository with meaningless certifications, which means it would be useful to
 be able to do maintenance and clean it up - which seems directly at odds with using 
 a secure append-only log.
@@ -54,7 +54,7 @@ replication/peering afterwards.
 
 Debian has standardized on using OpenPGP-signed [.buildinfo](https://anonscm.debian.org/cgit/reproducible/buildinfo-spec.git/tree/notes/buildinfo.rst) files, which are
 formatted as Debian 'control files'. This might seem a bit odd outside of Debian,
-but might it might be a good start to follow that convention at least for now,
+but it might be a good start to follow that convention at least for now,
 or leave it up to each deployment to agree on a convention.
 
 
@@ -78,7 +78,7 @@ certification files in subsequent requests.
 
 ### Source identifiers
 
-Both for reading and writing we need some way to identify exactly what binary is
+Both for reading and writing, we need some way to identify exactly what binary is
 being certified. It probably makes sense to have separate certification repository
 deployments for separate collections of binaries: for example, a certification
 repository for Debian packages would use the Debian package name, version and
@@ -89,10 +89,10 @@ would likely include groupId, artifactId, version, classifier and resource type.
 
 When choosing a simple HTTP interface for reading and writing, and storing the
 certifications on disk, the implementation is pretty close to a traditional
-webserver. There's only some small things missing: deciding what POSTs to allow
+webserver. There are only some small things missing: deciding what POSTs to allow
 and serving machine-readable folder indexes. This could be implemented by using
 a webserver as a starting point and writing some custom extensions, or by writing
-some software do perform exactly this and act as a webserver. With the right
+some software to perform exactly this and act as a webserver. With the right
 libraries the latter would likely be easiest, and for the more advanced
 webserver features you could put a webserver acting as a proxy in between.
 
