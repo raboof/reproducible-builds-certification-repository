@@ -3,8 +3,20 @@ name = "reproducible-builds-certification-repository"
 version = "0.0.0"
 
 [dependencies]
-rocket = "0.3.15"
-rocket_codegen = "0.3.15"
-rocket_contrib = "0.3.15"
-serde = "1.0.71"
-serde_derive = "1.0.71"
+
+# For HTTP
+rocket = "0.4.0"
+rocket_codegen = "0.4.0"
+
+# For JSON
+serde = "1.0.83"
+serde_derive = "1.0.83"
+
+# To make sure we get the fix for
+# https://github.com/alexcrichton/proc-macro2/pull/138:
+proc-macro2 = "0.4.24"
+
+[dependencies.rocket_contrib]
+version = "0.4.0"
+default-features = false
+features = ["json"]

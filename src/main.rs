@@ -1,8 +1,4 @@
-#![feature(plugin)]
-#![plugin(rocket_codegen)]
-
-extern crate rocket;
-extern crate rocket_contrib;
+#![feature(proc_macro_hygiene, decl_macro)]
 
 use std::io;
 use std::io::Error;
@@ -11,13 +7,17 @@ use std::fs::ReadDir;
 use std::env;
 use std::path::{Path, PathBuf};
 
+#[macro_use] extern crate rocket;
+
 use rocket::Data;
 use rocket::Request;
 use rocket::Response;
 use rocket::http::Status;
 use rocket::response::NamedFile;
 use rocket::response::Responder;
-use rocket_contrib::Json;
+
+extern crate rocket_contrib;
+use rocket_contrib::json::Json;
 
 enum RetrievedData {
   Certification(NamedFile),
@@ -25,8 +25,7 @@ enum RetrievedData {
 }
 use RetrievedData::*;
 
-#[macro_use]
-extern crate serde_derive;
+#[macro_use] extern crate serde_derive;
 
 #[derive(Serialize)]
 struct DirEntry {
