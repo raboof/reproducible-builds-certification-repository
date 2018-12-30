@@ -46,9 +46,9 @@ impl<'r> Responder<'r> for RetrievedData {
             Ok(e) => {
               let type_;
               if e.path().is_file() {
-                type_ = "file"
+                type_ = "object"
               } else if e.path().is_dir() {
-                type_ = "dir"
+                type_ = "collection"
               } else {
                 type_ = "unknown"
               }
