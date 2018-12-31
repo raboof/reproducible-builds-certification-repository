@@ -13,22 +13,32 @@ use rocket::Data;
 use rocket::Request;
 use rocket::Response;
 use rocket::http::Status;
+use rocket::http::MediaType;
 use rocket::response::NamedFile;
 use rocket::response::Responder;
 
 extern crate rocket_contrib;
 use rocket_contrib::json::Json;
+use rocket_contrib::templates::Template;
 
 enum RetrievedData {
   Certification(NamedFile),
-  Index(ReadDir),
+  Index(String, ReadDir),
 }
 use RetrievedData::*;
 
 #[macro_use] extern crate serde_derive;
 
 #[derive(Serialize)]
+struct Dir {
+  base_url: String,
+  name: String,
+  entries: Vec<DirEntry>,
+}
+
+#[derive(Serialize)]
 struct DirEntry {
+  path: String,
   name: String,
   #[serde(rename = "type")]
   type_: String,
@@ -39,7 +49,7 @@ impl<'r> Responder<'r> for RetrievedData {
   fn respond_to(self, request: &Request) -> Result<Response<'r>, Status> {
     match self {
       Certification(file) => file.respond_to(request),
-      Index(dir) => {
+      Index(name, dir) => {
         let mut entries = Vec::new();
         for entry in dir {
           match entry {
@@ -60,8 +70,10 @@ impl<'r> Responder<'r> for RetrievedData {
                   } else {
                     name = p;
                   };
+                  let file_name = e.path().file_name().map(|f| f.to_str()).unwrap_or(None).unwrap_or("").to_string();
                   entries.push(DirEntry {
-                    name: name.to_string(),
+                    path: name.to_string(),
+                    name: file_name,
                     type_: type_.to_string(),
                   });
                 },
@@ -71,7 +83,19 @@ impl<'r> Responder<'r> for RetrievedData {
             Err(_) => ()
           }
         };
-        Json(entries).respond_to(request)
+        match request.accept() {
+          Some(accept) if accept.preferred().media_type() == &MediaType::HTML => {
+            let context = Dir {
+              name: name,
+              base_url: env::var("BASE_URL").unwrap_or("http://localhost:8000".to_string()),
+
+              entries: entries,
+            };
+            Template::render("dir", context).respond_to(request)
+          }
+          _ =>
+            Json(entries).respond_to(request),
+        }
       }
     }
   }
@@ -79,13 +103,14 @@ impl<'r> Responder<'r> for RetrievedData {
 
 #[get("/")]
 fn root() -> Result<RetrievedData, Error> {
-  fs::read_dir(".").map(Index)
+  fs::read_dir(".").map(|read| Index("/".to_string(), read))
 }
 
 #[get("/<file..>")]
 fn files(file: PathBuf) -> Result<RetrievedData, String> {
     if file.is_dir() {
-      fs::read_dir(file).map(Index).map_err(|_| "Could not open".to_string())
+      let filename = file.to_str().unwrap_or("x").to_string();
+      fs::read_dir(file).map(|entries| Index(filename, entries)).map_err(|_| "Could not open".to_string())
     } else {
       NamedFile::open(file).map(Certification).map_err(|e| {
         if e.kind() == io::ErrorKind::NotFound {
@@ -104,7 +129,7 @@ fn puts(file: PathBuf, body: Data) -> io::Result<String> {
         // TODO check if contents are identical, if so, return 200
         // TODO rocket turns this into a 404, find out how to return
         // a better 4xx error message
-        Err(io::Error::new(io::ErrorKind::Other, "Already exists"))
+        Err(io::Error::new(io::ErrorKind::PermissionDenied, "Already exists"))
     } else {
         body.stream_to_file(file).map(|_| "OK".to_string())
     }
@@ -114,10 +139,12 @@ fn main() {
     // TODO error responses are HTML by default, perhaps something more
     // machinereadable?
 
+    let engine = rocket::ignite()
+        .mount("/", routes![root, files, puts])
+        .attach(Template::fairing());
+
     // TODO check response
     env::set_current_dir(&Path::new("data"));
 
-    rocket::ignite()
-        .mount("/", routes![root, files, puts])
-        .launch();
+    engine.launch();
 }

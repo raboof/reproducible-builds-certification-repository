@@ -1,0 +1,26 @@
+<html>
+<head>
+  <style>
+    code {
+      background-color: #eeeeee;
+      padding: 2em;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  Index of {{name}}:
+  <ul>
+  {{#each entries}}
+    <li>
+      <a href="{{base_url}}/{{this.path}}">{{this.name}}</a>
+    </li>
+  {{/each}}
+  </ul>
+  Get this listing in JSON format with:
+  <code>
+  curl -H "Accept: application/json" {{base_url}}/{{name}}
+  </code>
+  <a href="https://github.com/raboof/reproducible-builds-certification-repository">reproducible-builds-certification-repository on GitHub</a>
+</body>
+</html>
