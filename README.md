@@ -4,8 +4,12 @@ Collecting some thoughts and prototyping for a [certification repository](https:
 for [reproducible builds](https://reproducible-builds.org)
 
 Debian has a proof-of-concept [buildinfo server](https://github.com/lamby/buildinfo.debian.net),
-might be interesting to consider if that is or can be made suitable for more
-general use.
+but it is rather geared towards the Debian context. This implementation grew
+out of the experiments around 
+[reproducible builds for the JVM ecosystem](https://reproducible-builds.org/docs/jvm/),
+but does not need to be limited to that.  
+
+An example server may or may not currently be running at http://repo.bzzt.net:8000
 
 ## Storage
 
