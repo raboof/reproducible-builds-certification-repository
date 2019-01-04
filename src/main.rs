@@ -14,6 +14,7 @@ use rocket::Request;
 use rocket::Response;
 use rocket::http::Status;
 use rocket::http::MediaType;
+use rocket::response::status;
 use rocket::response::NamedFile;
 use rocket::response::Responder;
 
@@ -107,16 +108,16 @@ fn root() -> Result<RetrievedData, Error> {
 }
 
 #[get("/<file..>")]
-fn files(file: PathBuf) -> Result<RetrievedData, String> {
+fn files(file: PathBuf) -> Result<RetrievedData, rocket::response::status::Custom<&'static str>> {
     if file.is_dir() {
       let filename = file.to_str().unwrap_or("x").to_string();
-      fs::read_dir(file).map(|entries| Index(filename, entries)).map_err(|_| "Could not open".to_string())
+      fs::read_dir(file).map(|entries| Index(filename, entries)).map_err(|_| status::Custom(Status::InternalServerError, "Could not open"))
     } else {
       NamedFile::open(file).map(Certification).map_err(|e| {
         if e.kind() == io::ErrorKind::NotFound {
-        "Does not exist".to_string()
+        status::Custom(Status::NotFound, "Does not exist")
       } else {
-        "Other error".to_string()
+        status::Custom(Status::InternalServerError, "Unknown error")
       }
     })
     }
